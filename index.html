@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Resourcepack Optimizer EXTREME</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+
+        .extreme-badge {
+            background: linear-gradient(90deg, #ff0000, #ff6b00);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin: 0 auto 10px;
+            width: fit-content;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e0e7ff;
+            border-color: #4c1d95;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .settings {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 12px 5px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .preset-btn.light {
+            border-color: #10b981;
+        }
+
+        .preset-btn.medium {
+            border-color: #f59e0b;
+        }
+
+        .preset-btn.extreme {
+            border-color: #ef4444;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .results {
+            display: none;
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .results h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .savings {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .upload-area {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 MC Resourcepack Optimizer</h1>
+        <div class="extreme-badge">🔥 EXTREME MODE 🔥</div>
+        <p class="subtitle">Kompres hingga 60-70% lebih kecil!</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📦</div>
+            <p><strong>Klik atau drag file .zip disini</strong></p>
+            <p style="font-size: 12px; color: #666; margin-top: 10px;">Maksimal ukuran: 100MB</p>
+            <input type="file" id="fileInput" accept=".zip">
+        </div>
+
+        <div class="settings">
+            <label style="margin-bottom: 10px;">Pilih Preset Kompresi:</label>
+            <div class="preset-buttons">
+                <button class="preset-btn light" onclick="setPreset('light')">
+                    🟢 Ringan<br>
+                    <small>-30%</small>
+                </button>
+                <button class="preset-btn medium" onclick="setPreset('medium')">
+                    🟡 Sedang<br>
+                    <small>-50%</small>
+                </button>
+                <button class="preset-btn extreme active" onclick="setPreset('extreme')">
+                    🔴 Extreme<br>
+                    <small>-70%</small>
+                </button>
+            </div>
+
+            <div class="setting-group">
+                <label for="quality">Kualitas Gambar: <span id="qualityValue">60</span>%</label>
+                <input type="range" id="quality" min="30" max="100" value="60">
+                <div class="value-display">
+                    <span>Minimum</span>
+                    <span>Maksimum</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="maxSize">Ukuran Max Texture: <span id="maxSizeValue">256</span>px</label>
+                <input type="range" id="maxSize" min="64" max="1024" step="64" value="256">
+                <div class="value-display">
+                    <span>64px</span>
+                    <span>1024px</span>
+                </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="removeAlpha" checked>
+                <label for="removeAlpha">Hapus transparansi tidak perlu</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="grayscale">
+                <label for="grayscale">Mode Grayscale (hitam-putih)</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="reducePalette" checked>
+                <label for="reducePalette">Kurangi warna (256 color)</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="removeMeta" checked>
+                <label for="removeMeta">Hapus metadata gambar</label>
+            </div>
+        </div>
+
+        <button id="optimizeBtn" disabled>Pilih File Terlebih Dahulu</button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="status" id="statusText">Memproses...</div>
+        </div>
+
+        <div class="results" id="results">
+            <h3>✅ Hasil Optimasi</h3>
+            <div class="stat-row">
+                <span class="stat-label">Ukuran Awal:</span>
+                <span class="stat-value" id="originalSize">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Ukuran Akhir:</span>
+                <span class="stat-value" id="optimizedSize">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Gambar Dioptimasi:</span>
+                <span class="stat-value" id="imagesCount">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">File Dihapus:</span>
+                <span class="stat-value" id="filesRemoved">-</span>
+            </div>
+            <div class="savings" id="savings">Menghemat -</div>
+        </div>
+
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const optimizeBtn = document.getElementById('optimizeBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusText = document.getElementById('statusText');
+        const results = document.getElementById('results');
+        const errorDiv = document.getElementById('error');
+
+        let selectedFile = null;
+
+        // Preset configurations
+        const presets = {
+            light: { quality: 85, maxSize: 512, removeAlpha: false, reducePalette: false },
+            medium: { quality: 70, maxSize: 384, removeAlpha: true, reducePalette: true },
+            extreme: { quality: 60, maxSize: 256, removeAlpha: true, reducePalette: true }
+        };
+
+        function setPreset(preset) {
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.preset-btn').classList.add('active');
+            
+            const config = presets[preset];
+            document.getElementById('quality').value = config.quality;
+            document.getElementById('qualityValue').textContent = config.quality;
+            document.getElementById('maxSize').value = config.maxSize;
+            document.getElementById('maxSizeValue').textContent = config.maxSize;
+            document.getElementById('removeAlpha').checked = config.removeAlpha;
+            document.getElementById('reducePalette').checked = config.reducePalette;
+        }
+
+        // Slider updates
+        document.getElementById('quality').addEventListener('input', (e) => {
+            document.getElementById('qualityValue').textContent = e.target.value;
+        });
+
+        document.getElementById('maxSize').addEventListener('input', (e) => {
+            document.getElementById('maxSizeValue').textContent = e.target.value;
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.zip')) {
+                showError('File harus berformat .zip');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) {
+                showError('File terlalu besar (maksimal 100MB)');
+                return;
+            }
+
+            selectedFile = file;
+            optimizeBtn.disabled = false;
+            optimizeBtn.textContent = `🔥 Optimasi ${file.name}`;
+            errorDiv.style.display = 'none';
+            results.style.display = 'none';
+        }
+
+        // Optimize button
+        optimizeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            optimizeBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            results.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            const settings = {
+                quality: parseInt(document.getElementById('quality').value),
+                maxSize: parseInt(document.getElementById('maxSize').value),
+                removeAlpha: document.getElementById('removeAlpha').checked,
+                grayscale: document.getElementById('grayscale').checked,
+                reducePalette: document.getElementById('reducePalette').checked,
+                removeMeta: document.getElementById('removeMeta').checked
+            };
+
+            try {
+                await optimizeResourcepack(selectedFile, settings);
+            } catch (error) {
+                showError('Error: ' + error.message);
+                optimizeBtn.disabled = false;
+            }
+
+            progressContainer.style.display = 'none';
+        });
+
+        async function optimizeResourcepack(file, settings) {
+            updateProgress(10, 'Membaca file...');
+
+            const zip = await JSZip.loadAsync(file);
+            const newZip = new JSZip();
+
+            let stats = {
+                originalSize: file.size,
+                optimizedSize: 0,
+                imagesOptimized: 0,
+                filesRemoved: 0
+            };
+
+            const files = Object.keys(zip.files);
+            let processed = 0;
+
+            // Daftar file yang tidak perlu (untuk mengurangi ukuran lebih lanjut)
+            const unnecessaryFiles = [
+                '.txt', '.md', 'readme', 'license', 'credits',
+                'thumbnail', 'preview', '.psd', '.ai'
+            ];
+
+            updateProgress(20, 'Memproses file...');
+
+            for (const filename of files) {
+                const zipEntry = zip.files[filename];
+
+                if (zipEntry.dir) {
+                    newZip.folder(filename);
+                    continue;
+                }
+
+                // Skip file yang tidak perlu
+                const shouldSkip = unnecessaryFiles.some(pattern => 
+                    filename.toLowerCase().includes(pattern)
+                );
+
+                if (shouldSkip) {
+                    stats.filesRemoved++;
+                    processed++;
+                    continue;
+                }
+
+                const ext = filename.split('.').pop().toLowerCase();
+
+                if (ext === 'png') {
+                    updateProgress(20 + (processed / files.length) * 60, 
+                        `Optimasi: ${filename.split('/').pop().substring(0, 20)}...`);
+                    
+                    try {
+                        const blob = await zipEntry.async('blob');
+                        const optimizedBlob = await optimizeImageExtreme(blob, settings);
+                        
+                        // Skip jika hasil optimasi lebih besar (rare case)
+                        if (optimizedBlob.size < blob.size || settings.quality < 70) {
+                            newZip.file(filename, optimizedBlob);
+                            stats.imagesOptimized++;
+                        } else {
+                            newZip.file(filename, blob);
+                        }
+                    } catch (e) {
+                        const content = await zipEntry.async('blob');
+                        newZip.file(filename, content);
+                    }
+                } else if (ext === 'json' && settings.removeMeta) {
+                    // Minify JSON files
+                    try {
+                        const content = await zipEntry.async('string');
+                        const minified = JSON.stringify(JSON.parse(content));
+                        newZip.file(filename, minified);
+                    } catch (e) {
+                        const content = await zipEntry.async('blob');
+                        newZip.file(filename, content);
+                    }
+                } else {
+                    const content = await zipEntry.async('blob');
+                    newZip.file(filename, content);
+                }
+
+                processed++;
+            }
+
+            updateProgress(90, 'Membuat file ZIP dengan kompresi maksimal...');
+
+            const optimizedBlob = await newZip.generateAsync({
+                type: 'blob',
+                compression: 'DEFLATE',
+                compressionOptions: { level: 9 }
+            });
+
+            stats.optimizedSize = optimizedBlob.size;
+
+            updateProgress(100, 'Selesai!');
+
+            showResults(stats);
+            downloadFile(optimizedBlob, selectedFile.name.replace('.zip', '_optimized.zip'));
+        }
+
+        async function optimizeImageExtreme(blob, settings) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(blob);
+
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Resize aggressive
+                    if (width > settings.maxSize || height > settings.maxSize) {
+                        if (width > height) {
+                            height = Math.floor((height / width) * settings.maxSize);
+                            width = settings.maxSize;
+                        } else {
+                            width = Math.floor((width / height) * settings.maxSize);
+                            height = settings.maxSize;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d', { 
+                        alpha: !settings.removeAlpha,
+                        willReadFrequently: true 
+                    });
+
+                    // Background putih jika remove alpha
+                    if (settings.removeAlpha) {
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, width, height);
+                    }
+
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Apply filters
+                    if (settings.grayscale || settings.reducePalette) {
+                        const imageData = ctx.getImageData(0, 0, width, height);
+                        const data = imageData.data;
+
+                        for (let i = 0; i < data.length; i += 4) {
+                            if (settings.grayscale) {
+                                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                                data[i] = data[i + 1] = data[i + 2] = avg;
+                            }
+
+                            if (settings.reducePalette) {
+                                // Reduce to 256 colors palette
+                                data[i] = Math.round(data[i] / 32) * 32;
+                                data[i + 1] = Math.round(data[i + 1] / 32) * 32;
+                                data[i + 2] = Math.round(data[i + 2] / 32) * 32;
+                            }
+                        }
+
+                        ctx.putImageData(imageData, 0, 0);
+                    }
+
+                    // Export dengan quality rendah
+                    canvas.toBlob((optimizedBlob) => {
+                        URL.revokeObjectURL(url);
+                        resolve(optimizedBlob);
+                    }, 'image/png', settings.quality / 100);
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Failed to load image'));
+                };
+
+                img.src = url;
+            });
+        }
+
+        function updateProgress(percent, text) {
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = Math.round(percent) + '%';
+            statusText.textContent = text;
+        }
+
+        function showResults(stats) {
+            const originalMB = (stats.originalSize / (1024 * 1024)).toFixed(2);
+            const optimizedMB = (stats.optimizedSize / (1024 * 1024)).toFixed(2);
+            const savedMB = (originalMB - optimizedMB).toFixed(2);
+            const savedPercent = ((savedMB / originalMB) * 100).toFixed(1);
+
+            document.getElementById('originalSize').textContent = originalMB + ' MB';
+            document.getElementById('optimizedSize').textContent = optimizedMB + ' MB';
+            document.getElementById('imagesCount').textContent = stats.imagesOptimized;
+            document.getElementById('filesRemoved').textContent = stats.filesRemoved;
+            document.getElementById('savings').textContent = `🎉 Menghemat ${savedMB} MB (${savedPercent}%)`;
+
+            results.style.display = 'block';
+            optimizeBtn.disabled = false;
+            optimizeBtn.textContent = '🔥 Optimasi File Lain';
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
